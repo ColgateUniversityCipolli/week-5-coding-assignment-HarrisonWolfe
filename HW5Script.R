@@ -1,4 +1,4 @@
-library(stringr)
+
 library(jsonlite)
 library(tidyverse)
 
@@ -32,6 +32,7 @@ danceability = jsondata$rhythm$danceability
 tuning_frequency = jsondata$tonal$tuning_frequency
 
 name.with.json = list.files("EssentiaOutput")
+
 #Making empty vectors
 overall_loudness = c()
 spectral_energy = c()
@@ -70,6 +71,7 @@ for(i in 1:length(list.files("EssentiaOutput"))){
   
   (jsondata = fromJSON(essentia.output))
   
+  
   overall_loudness[i] = jsondata$lowlevel$loudness_ebu128$integrated
   spectral_energy[i] = jsondata$lowlevel$spectral_energy$mean
   dissonance[i] = jsondata$lowlevel$dissonance$mean
@@ -83,8 +85,8 @@ for(i in 1:length(list.files("EssentiaOutput"))){
 #Saving as data frame
 data.from.all.songs = tibble(name.with.json, artist, album, track, overall_loudness, spectral_energy, dissonance, pitch_salience, bpm, beats_loudness, danceability, tuning_frequency)
 
-valence = c()
 
+#Doing the means of everything and changing names and filtering some columns out
 more.info <- read_csv("EssentiaModelOutput.csv") %>%
   mutate(valence = rowMeans(select(., contains("valence")))) %>%
   mutate(arousal = rowMeans(select(., contains("arousal")))) %>%
@@ -99,11 +101,20 @@ more.info <- read_csv("EssentiaModelOutput.csv") %>%
   mutate(timbreBright = eff_timbre_bright) %>%
   select(artist,album,track,valence,arousal,aggressive,happy,sad,party,relaxed,acoustic,electric,instrumental,timbreBright)
 
-  
+
+#Merging with Base R because it's super easy
 LIWCOutput = read_csv("LIWCOutput/LIWCOutput.csv")
 
 two = merge(LIWCOutput, more.info)         
-final.df = merge(data.from.all.songs,two)
+
+#Removing Function
+final.df = merge(data.from.all.songs,two) |>
+  mutate(funt = `function`) |>
+  select(-`function`)
+
+
+
+ 
          
 
 
